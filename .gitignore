@@ -1,0 +1,71 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Environment and secrets (keep .env.example tracked if you add one)
+.env
+.env.*
+!.env.example
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs (uncomment if you do not commit editor settings)
+# .idea/
+# .vscode/
+
+# Logs and local databases
+*.log
+*.sqlite3
+
+# Model / large local caches (sentence-transformers, huggingface, etc.)
+.cache/
+models/
+*.pt
+*.bin
+*.onnx
+
+# uv lock optional — remove next line if you commit uv.lock
+# uv.lock

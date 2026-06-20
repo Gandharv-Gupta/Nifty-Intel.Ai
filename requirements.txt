@@ -1,0 +1,42 @@
+# API
+fastapi
+uvicorn[standard]
+
+# LangChain / LangGraph
+langchain
+langchain-core
+langchain-community
+langgraph
+
+# OpenAI
+openai
+langchain-openai
+
+# Embeddings
+sentence-transformers
+
+# Vector Database
+qdrant-client
+
+# HTTP Requests
+requests
+
+# Environment Variables
+python-dotenv
+
+# Data Processing
+pandas
+numpy
+
+# Tokenization / Text Splitting
+tiktoken
+
+# Validation
+pydantic
+
+# Logging & Utilities
+tenacity
+
+# PDF Processing (Phase 2)
+pymupdf
+
