@@ -89,12 +89,58 @@ async def chat(req: ChatRequest) -> StreamingResponse:
     async def generate_response() -> AsyncIterator[str]:
         query = req.query.strip()
         inputs = {"messages": [{"role": "user", "content": query}]}
+        last_tool_name = ""
         try:
-            async for event in nifty_agent.astream(inputs, stream_mode="messages"):
-                if isinstance(event, tuple) and len(event) >= 2:
-                    token = event[0]
+            async for event in nifty_agent.astream(
+                inputs,
+                stream_mode=["messages", "tools"],
+            ):
+                if isinstance(event, tuple) and len(event) == 3:
+                    _, mode, payload = event[0], event[1], event[2]
+                elif isinstance(event, tuple) and len(event) == 2:
+                    mode, payload = event[0], event[1]
                 else:
-                    token = event
+                    continue
+                if mode == "tools" and isinstance(payload, dict):
+                    ev = payload.get("event")
+                    if ev == "tool-started":
+                        last_tool_name = str(
+                            payload.get("tool_name") or payload.get("name") or "tool"
+                        )
+                        yield _sse(
+                            {
+                                "content": "",
+                                "done": False,
+                                "tool": last_tool_name,
+                                "tool_phase": "running",
+                            }
+                        )
+                    elif ev == "tool-finished":
+                        yield _sse(
+                            {
+                                "content": "",
+                                "done": False,
+                                "tool": last_tool_name or None,
+                                "tool_phase": "idle",
+                            }
+                        )
+                    elif ev == "tool-error":
+                        yield _sse(
+                            {
+                                "content": "",
+                                "done": False,
+                                "tool": last_tool_name or None,
+                                "tool_phase": "error",
+                                "tool_error": str(payload.get("message") or "tool error"),
+                            }
+                        )
+                    continue
+                if mode != "messages":
+                    continue
+                if isinstance(payload, tuple) and len(payload) >= 1:
+                    token = payload[0]
+                else:
+                    token = payload
                 text = _text_from_llm_token(token)
                 if not text:
                     continue
@@ -104,10 +150,18 @@ async def chat(req: ChatRequest) -> StreamingResponse:
                     if CHAT_STREAM_CHUNK_DELAY_SECONDS > 0:
                         await asyncio.sleep(CHAT_STREAM_CHUNK_DELAY_SECONDS)
 
-            yield _sse({"content": "", "done": True})
+            yield _sse({"content": "", "done": True, "tool": None, "tool_phase": "idle"})
         except Exception as exc:
             logger.exception("chat stream failed")
-            yield _sse({"content": "", "done": True, "error": str(exc)})
+            yield _sse(
+                {
+                    "content": "",
+                    "done": True,
+                    "error": str(exc),
+                    "tool": None,
+                    "tool_phase": "idle",
+                }
+            )
 
     return StreamingResponse(
         generate_response(),

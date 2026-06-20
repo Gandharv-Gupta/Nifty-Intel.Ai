@@ -32,9 +32,15 @@
         box-sizing: border-box;
       }
 
+      html {
+        height: 100%;
+      }
+
       body {
         margin: 0;
-        min-height: 100dvh;
+        height: 100%;
+        max-height: 100dvh;
+        overflow: hidden;
         font-family: "DM Sans", system-ui, sans-serif;
         background: var(--bg-deep);
         color: var(--text);
@@ -53,24 +59,121 @@
         z-index: 0;
       }
 
-      .shell {
+      .app-frame {
         position: relative;
         z-index: 1;
-        max-width: 880px;
+        display: flex;
+        width: 100%;
+        max-width: 1080px;
+        height: 100dvh;
+        max-height: 100dvh;
         margin: 0 auto;
-        min-height: 100dvh;
+        overflow: hidden;
+        align-items: stretch;
+      }
+
+      .tool-rail {
+        flex: 0 0 220px;
+        width: 220px;
+        min-width: 220px;
+        border-right: 1px solid var(--border);
+        background: rgba(18, 24, 32, 0.92);
+        backdrop-filter: blur(8px);
+        padding: 1.25rem 1rem 1.25rem 1.15rem;
         display: flex;
         flex-direction: column;
-        padding: 1.25rem 1rem 1.5rem;
+        align-items: stretch;
+        justify-content: flex-start;
+        overflow: hidden;
+      }
+
+      .tool-rail-card {
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        padding: 1rem 0.9rem 1rem 1rem;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      }
+
+      .tool-rail-label {
+        margin: 0 0 0.65rem;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        line-height: 1.2;
+      }
+
+      .tool-rail .tool-name {
+        margin: 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--accent);
+        line-height: 1.45;
+        word-break: break-word;
+        min-height: 2.6em;
+        padding: 0.35rem 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .tool-rail .tool-phase {
+        margin: 0.65rem 0 0;
+        font-size: 0.74rem;
+        color: var(--text-muted);
+        line-height: 1.45;
+        min-height: 1.45em;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.45rem;
+      }
+
+      .tool-rail .tool-phase.is-running::before {
+        content: "";
+        display: block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 0.42em;
+        background: var(--accent);
+        box-shadow: 0 0 10px rgba(61, 214, 198, 0.55);
+        animation: pulse-dot 1s ease-in-out infinite;
+      }
+
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 0.35;
+          transform: scale(0.9);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .shell {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 1.25rem 1rem 1.25rem;
+        overflow: hidden;
       }
 
       header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 1rem;
         margin-bottom: 1rem;
         flex-wrap: wrap;
+        flex-shrink: 0;
       }
 
       .brand {
@@ -105,33 +208,11 @@
         color: var(--text-muted);
       }
 
-      .api-field {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.75rem;
-        color: var(--text-muted);
-      }
-
-      .api-field input {
-        width: min(240px, 40vw);
-        padding: 0.45rem 0.65rem;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: var(--bg-panel);
-        color: var(--text);
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.7rem;
-      }
-
-      .api-field input:focus {
-        outline: 2px solid var(--accent-dim);
-        border-color: rgba(61, 214, 198, 0.35);
-      }
-
       .thread {
         flex: 1;
+        min-height: 0;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         padding: 0.5rem 0 1rem;
         display: flex;
         flex-direction: column;
@@ -329,6 +410,7 @@
       }
 
       .composer {
+        flex-shrink: 0;
         margin-top: auto;
         padding-top: 0.75rem;
         border-top: 1px solid var(--border);
@@ -403,6 +485,7 @@
       }
 
       .error-banner {
+        flex-shrink: 0;
         padding: 0.65rem 1rem;
         border-radius: 10px;
         background: rgba(248, 113, 113, 0.12);
@@ -447,38 +530,64 @@
         }
       }
 
-      @media (max-width: 520px) {
-        .api-field {
-          width: 100%;
+      @media (max-width: 720px) {
+        .app-frame {
+          flex-direction: column;
+          max-width: 100%;
         }
-        .api-field input {
-          flex: 1;
-          width: auto;
+        .tool-rail {
+          flex: none;
+          width: 100%;
+          min-width: 0;
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+          padding: 0.85rem 1rem;
+        }
+        .tool-rail-card {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: baseline;
+          gap: 0.5rem 1rem;
+        }
+        .tool-rail-label {
+          flex: 0 0 100%;
+          margin-bottom: 0.35rem;
+        }
+        .tool-rail .tool-name {
+          flex: 1 1 auto;
+          min-width: 0;
+          border-top: none;
+          border-bottom: none;
+          padding: 0;
+          min-height: 0;
+        }
+        .tool-rail .tool-phase {
+          flex: 0 0 auto;
+          margin: 0;
+          align-self: center;
         }
       }
     </style>
   </head>
   <body>
     <div class="bg-grid" aria-hidden="true"></div>
-    <div class="shell">
+    <div class="app-frame">
+      <aside class="tool-rail" aria-live="polite" aria-label="Agent tools">
+        <div class="tool-rail-card">
+          <p class="tool-rail-label">Active tool</p>
+          <div id="toolName" class="tool-name">—</div>
+          <div id="toolSub" class="tool-phase"></div>
+        </div>
+      </aside>
+      <div class="shell">
       <header>
         <div class="brand">
           <div class="logo" aria-hidden="true">N</div>
           <div>
             <h1>Nifty Intel</h1>
-            <p>Markdown, tables &amp; HTML — streamed from your API</p>
+            <p>Get AI intel on Nifty data — context, tables, and live answers.</p>
           </div>
         </div>
-        <label class="api-field">
-          <span>API base</span>
-          <input
-            id="apiBase"
-            type="text"
-            spellcheck="false"
-            placeholder="(same origin)"
-            title="Leave empty when this page is served from the API host (e.g. localhost:8000)"
-          />
-        </label>
       </header>
 
       <div id="error" class="error-banner" hidden></div>
@@ -500,11 +609,9 @@
             </svg>
           </button>
         </div>
-        <p class="hint">
-          Enter to send · Shift+Enter for a new line · Open this app at
-          <code>/nifty/</code> on your API host · POST <code>/chat</code> (SSE)
-        </p>
+        <p class="hint">Enter to send · Shift+Enter for a new line</p>
       </footer>
+    </div>
     </div>
 
     <script>
@@ -512,8 +619,61 @@
         const thread = document.getElementById("thread");
         const input = document.getElementById("input");
         const sendBtn = document.getElementById("send");
-        const apiBaseInput = document.getElementById("apiBase");
         const errorEl = document.getElementById("error");
+
+        function resetToolRailPreSend() {
+          const nameEl = document.getElementById("toolName");
+          const subEl = document.getElementById("toolSub");
+          if (!nameEl || !subEl) return;
+          nameEl.textContent = "…";
+          subEl.textContent = "Waiting…";
+          subEl.classList.remove("is-running");
+        }
+
+        function resetToolRailIdle() {
+          const nameEl = document.getElementById("toolName");
+          const subEl = document.getElementById("toolSub");
+          if (!nameEl || !subEl) return;
+          nameEl.textContent = "—";
+          subEl.textContent = "";
+          subEl.classList.remove("is-running");
+        }
+
+        function updateToolRail(data) {
+          const nameEl = document.getElementById("toolName");
+          const subEl = document.getElementById("toolSub");
+          if (!nameEl || !subEl) return;
+          const has =
+            Object.prototype.hasOwnProperty.call(data, "tool") ||
+            Object.prototype.hasOwnProperty.call(data, "tool_phase") ||
+            Object.prototype.hasOwnProperty.call(data, "tool_error");
+          if (!has) return;
+
+          const phase = data.tool_phase;
+          const tool = data.tool;
+          const err = data.tool_error;
+
+          if (data.done === true && phase === "idle" && (tool === null || tool === undefined)) {
+            resetToolRailIdle();
+            return;
+          }
+
+          if (tool != null && tool !== "") {
+            nameEl.textContent = String(tool);
+          }
+
+          subEl.classList.remove("is-running");
+          if (phase === "running") {
+            subEl.textContent = "Running…";
+            subEl.classList.add("is-running");
+          } else if (phase === "idle" && tool) {
+            subEl.textContent = "Done";
+          } else if (phase === "idle") {
+            subEl.textContent = "";
+          } else if (phase === "error") {
+            subEl.textContent = err ? String(err) : "Tool error";
+          }
+        }
 
         marked.setOptions({
           gfm: true,
@@ -659,11 +819,6 @@
           return { wrap, bubble, content };
         }
 
-        function apiBase() {
-          const v = (apiBaseInput.value || "").trim().replace(/\/$/, "");
-          return v;
-        }
-
         function parseSseBlock(block, onEvent) {
           for (const line of block.split("\n")) {
             if (!line.startsWith("data:")) continue;
@@ -679,9 +834,8 @@
           }
         }
 
-        async function streamChat(query, onDelta) {
-          const base = apiBase();
-          const url = (base || "") + "/chat";
+        async function streamChat(query, onDelta, onTool) {
+          const url = "/chat";
           const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
@@ -708,6 +862,15 @@
                   assembled += data.content;
                   if (onDelta) onDelta(assembled);
                 }
+                if (onTool) {
+                  if (
+                    Object.prototype.hasOwnProperty.call(data, "tool") ||
+                    Object.prototype.hasOwnProperty.call(data, "tool_phase") ||
+                    Object.prototype.hasOwnProperty.call(data, "tool_error")
+                  ) {
+                    onTool(data);
+                  }
+                }
                 if (data.error) throw new Error(data.error);
               });
             }
@@ -726,6 +889,15 @@
               if (typeof data.content === "string") {
                 assembled += data.content;
                 if (onDelta) onDelta(assembled);
+              }
+              if (onTool) {
+                if (
+                  Object.prototype.hasOwnProperty.call(data, "tool") ||
+                  Object.prototype.hasOwnProperty.call(data, "tool_phase") ||
+                  Object.prototype.hasOwnProperty.call(data, "tool_error")
+                ) {
+                  onTool(data);
+                }
               }
               if (data.error) throw new Error(data.error);
             });
@@ -747,11 +919,12 @@
           input.value = "";
           input.style.height = "auto";
 
+          resetToolRailPreSend();
           const { content } = appendAssistantShell();
           const paint = createStreamPainter(content);
 
           try {
-            const reply = await streamChat(text, paint);
+            const reply = await streamChat(text, paint, updateToolRail);
             content.style.color = "";
             if (!reply.trim()) {
               content.textContent = "No text in response.";
@@ -770,6 +943,7 @@
             sendBtn.disabled = false;
             thread.scrollTop = thread.scrollHeight;
             input.focus();
+            resetToolRailIdle();
           }
         }
 
