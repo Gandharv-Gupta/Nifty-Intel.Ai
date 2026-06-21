@@ -1,0 +1,143 @@
+flowchart LR
+
+    %% =====================
+    %% USER
+    %% =====================
+
+    USER([👤 User])
+
+    %% =====================
+    %% AGENT
+    %% =====================
+
+    subgraph AGENT["🤖 LangGraph Agent System"]
+
+        AG["🧠 NiftyAgent"]
+
+        T1["📈 Market Data Tool"]
+
+        T2["📊 Option Chain Tool"]
+
+        T3["🏆 Top Gainers / Losers Tool"]
+
+        T4["📄 Company Documents Tool"]
+
+        T5["📉 Analytics Tool"]
+
+        LLM["🤖 OpenAI / Gemini"]
+
+        RAG["🔎 RAG Retrieval Layer"]
+
+        AG --- T1
+        AG --- T2
+        AG --- T3
+        AG --- T4
+        AG --- T5
+
+        T1 --> RAG
+        T2 --> RAG
+        T3 --> RAG
+        T4 --> RAG
+
+        T4 -.Uses .-> LLM
+        T5 -.Uses .-> LLM
+
+    end
+
+    USER ==> AG
+
+    %% =====================
+    %% VECTOR DATABASE
+    %% =====================
+
+    subgraph QDRANT["🗄️ Qdrant Vector Database"]
+
+        MD[["📋 Market Data Collection"]]
+
+        OC[["📋 Option Chain Collection"]]
+
+        CD[["📋 Company Documents Collection"]]
+
+    end
+
+    RAG --> MD
+    RAG --> OC
+    RAG --> CD
+
+    %% =====================
+    %% INGESTION
+    %% =====================
+
+    subgraph PIPELINE["📥 Daily Ingestion Pipeline"]
+
+        NSE1["📈 NSE Nifty 50 API"]
+
+        NSE2["📊 NSE Option Chain API"]
+
+        NSE3["📄 NSE Corporate Announcements API"]
+
+        PDF["📄 PDF Download"]
+
+        PROCESS["⚙️ Processing Layer
+
+• Data Cleaning
+• PDF Text Extraction
+• Chunking"]
+
+        EMB["🧬 Embedding Model
+all-MiniLM-L6-v2"]
+
+    end
+
+    NSE1 --> PROCESS
+
+    NSE2 --> PROCESS
+
+    NSE3 --> PDF
+
+    PDF --> PROCESS
+
+    PROCESS --> EMB
+
+    EMB --> MD
+    EMB --> OC
+    EMB --> CD
+
+    %% =====================
+    %% RESPONSE
+    %% =====================
+
+    RESPONSE([💬 AI Response])
+
+    AG ==> RESPONSE
+
+    %% =====================
+    %% COLORS
+    %% =====================
+
+    classDef user fill:#FFD54F,stroke:#F57F17,color:#000,stroke-width:3px;
+
+    classDef response fill:#81C784,stroke:#1B5E20,color:#000,stroke-width:4px;
+
+    classDef agent fill:#E1BEE7,stroke:#6A1B9A,color:#000,stroke-width:2px;
+
+    classDef llm fill:#FFCDD2,stroke:#C62828,color:#000,stroke-width:3px;
+
+    classDef db fill:#C8E6C9,stroke:#1B5E20,color:#000,stroke-width:3px;
+
+    classDef source fill:#BBDEFB,stroke:#1565C0,color:#000,stroke-width:2px;
+
+    classDef process fill:#FFE0B2,stroke:#EF6C00,color:#000,stroke-width:2px;
+
+    class USER user;
+    class RESPONSE response;
+
+    class AG,T1,T2,T3,T4,T5,RAG agent;
+
+    class LLM llm;
+
+    class MD,OC,CD db;
+
+    class NSE1,NSE2,NSE3 source;
+
+    class PROCESS,PDF,EMB process;
