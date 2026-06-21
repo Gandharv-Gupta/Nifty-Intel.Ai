@@ -37,7 +37,7 @@ def get_option_chain(expiry: str, strike_price: int = None):
 
     results, err = scroll_points(
         collection_name=qdrant_collection_name_nifty_option,
-        limit=500,
+        limit=60,
         with_payload=True,
         with_vectors=False,
     )
