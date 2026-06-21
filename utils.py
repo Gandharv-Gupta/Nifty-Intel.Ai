@@ -1,6 +1,15 @@
+from pathlib import Path
 from typing import Any
+
 from langchain_core.messages import AIMessage, BaseMessage, message_to_dict
 import json
+
+
+def load_repo_dotenv() -> None:
+    """Load repo-root `.env` regardless of process cwd (e.g. `python IngestionPipeline/...`)."""
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent / ".env")
 
 
 def json_safe(value: Any) -> Any:

@@ -12,10 +12,11 @@ if str(_repo_root) not in sys.path:
 from sentence_transformers import SentenceTransformer
 from qdrant_client.models import PointStruct
 
+from utils import load_repo_dotenv
 from shared_qdrant import client
-from dotenv import load_dotenv
+from extract_company_data import extract_pdf_text
 
-load_dotenv()
+load_repo_dotenv()
 
 qdrant_collection_name_company_documents = os.getenv(
     "QDRANT_COLLECTION_NAME_COMPANY_DOCUMENTS"
@@ -26,8 +27,8 @@ embedding_model = SentenceTransformer(
 )
 
 
-def build_company_text(announcement: dict) -> str:
-    return f"""
+def build_company_text(announcement: dict, pdf_extract: str = "") -> str:
+    base = f"""
     Company Symbol: {announcement.get('symbol')}
     Company Name: {announcement.get('sm_name')}
 
@@ -40,6 +41,10 @@ def build_company_text(announcement: dict) -> str:
     Announcement Date:
     {announcement.get('an_dt')}
     """.strip()
+    pe = (pdf_extract or "").strip()
+    if pe and not pe.startswith("Unable to download PDF"):
+        return f"{base}\n\nAttachment PDF text:\n{pe}"
+    return base
 
 
 def store_company_data(announcements: list):
@@ -52,7 +57,17 @@ def store_company_data(announcements: list):
 
     for announcement in announcements:
 
-        text = build_company_text(announcement)
+        pdf_url = announcement.get("attchmntFile")
+        pdf_extract = ""
+        pdf_extraction_error = None
+        if pdf_url:
+            raw = extract_pdf_text(pdf_url)
+            if isinstance(raw, str) and raw.startswith("Unable to download PDF"):
+                pdf_extraction_error = raw
+            else:
+                pdf_extract = raw or ""
+
+        text = build_company_text(announcement, pdf_extract)
 
         vector = embedding_model.encode(text).tolist()
 
@@ -91,7 +106,15 @@ def store_company_data(announcements: list):
                 ZoneInfo("Asia/Kolkata")
             ).isoformat(),
 
-            "raw_record": announcement
+            "pdf_extracted_text": (
+                (pdf_extract[:12000] if len(pdf_extract) > 12000 else pdf_extract)
+                if pdf_extract
+                else None
+            ),
+
+            "pdf_extraction_error": pdf_extraction_error,
+
+            "raw_record": announcement,
         }
 
         points.append(
@@ -116,13 +139,9 @@ def store_company_data(announcements: list):
 if __name__ == "__main__":
     import extract_company_data as ec
 
-    if getattr(ec, "response", None) is None or ec.response.status_code != 200:
-        print("Company announcements fetch did not succeed; nothing ingested.")
-        sys.exit(1)
-
     announcements = ec.extract_company_announcements()
     if not isinstance(announcements, list) or not announcements:
-        print("No announcements list in response; nothing ingested.")
+        print("Company announcements fetch did not return data; nothing ingested.")
         sys.exit(1)
 
     store_company_data(announcements)
