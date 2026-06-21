@@ -7,6 +7,7 @@ from Tools.market_data_tool import get_market_data
 from Tools.option_chain_tool import get_option_chain
 from Tools.top_gainers_losers_tool import get_top_movers
 from Tools.analytics_tool import analyze_market
+from Tools.company_data_tool import get_company_documents_tool
 
 load_dotenv()
 
@@ -24,7 +25,13 @@ model = init_chat_model(
 # Define model, tools, and system prompt to build the agent
 nifty_agent = create_agent(
     model=model,
-    tools=[get_market_data, get_option_chain, get_top_movers, analyze_market],
+    tools=[
+        get_market_data,
+        get_option_chain,
+        get_top_movers,
+        analyze_market,
+        get_company_documents_tool,
+    ],
     system_prompt=nifty_agent_prompt,
 )
 

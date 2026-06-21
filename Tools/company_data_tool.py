@@ -1,94 +1,94 @@
 import os
 import sys
-import tempfile
+from pathlib import Path
 
-import fitz  # pymupdf
-import requests
-from dotenv import load_dotenv
+_repo_root = Path(__file__).resolve().parents[1]
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
 from langchain.tools import tool
-from qdrant_client import QdrantClient
+from qdrant_client.models import FieldCondition, Filter, MatchValue
+from sentence_transformers import SentenceTransformer
 
-load_dotenv()
+from shared_qdrant import client
+from utils import load_repo_dotenv
 
-_NSE_BROWSER_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/pdf,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://www.nseindia.com/",
-    "Connection": "keep-alive",
-}
+load_repo_dotenv()
+
+EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+_embedding_model: SentenceTransformer | None = None
 
 
-def _fetch_pdf_bytes(pdf_url: str, timeout: int = 60) -> tuple[bytes | None, str]:
-    """NSE PDFs need cookies + browser-like headers."""
-    base = (os.getenv("NSE_BASE_URL") or "https://www.nseindia.com").rstrip("/")
-    session = requests.Session()
-    session.headers.update(_NSE_BROWSER_HEADERS)
+def _embed_model() -> SentenceTransformer:
+    global _embedding_model
+    if _embedding_model is None:
+        _embedding_model = SentenceTransformer(EMBED_MODEL_NAME)
+    return _embedding_model
+
+
+def _symbol_filter(sym: str) -> Filter:
+    return Filter(must=[FieldCondition(key="symbol", match=MatchValue(value=sym.upper()))])
+
+
+def _top_k() -> int:
+    raw = os.getenv("GET_COMPANY_DOCS_TOP_K", "5")
     try:
-        session.get(f"{base}/", timeout=min(15, timeout))
-        response = session.get(pdf_url, timeout=timeout, allow_redirects=True)
-    except requests.RequestException as exc:
-        return None, f"network error: {exc}"
-    if response.status_code != 200:
-        return None, f"HTTP {response.status_code}"
-    data = response.content
-    if len(data) < 5 or not data.lstrip().startswith(b"%PDF"):
-        return None, "not a PDF (blocked, login page, or empty body)"
-    return data, ""
-
-
-client = QdrantClient(
-    url=os.getenv("QDRANT_CLUSTER_URL"),
-    api_key=os.getenv("QDRANT_API_KEY"),
-)
+        k = int(str(raw).strip())
+        return max(1, min(k, 20))
+    except ValueError:
+        return 5
 
 
 @tool
-def get_company_documents_tool(symbol: str):
-    """Fetch company announcement records from Qdrant (e.g. INFY, TCS, RELIANCE)."""
+def get_company_documents_tool(symbol: str, query: str = ""):
+    """
+    Company announcements in Qdrant (vectors include PDF + metadata from ingestion).
+
+    - Always pass NSE `symbol` (e.g. DMART, INFY).
+    - Pass the user's question or keywords as `query` to rank the best-matching points for that
+      symbol (semantic search). Use the same wording the user cares about (e.g. "AGM notice",
+      "dividend", "board meeting").
+    - If `query` is empty, returns up to 100 rows for that symbol (scroll, no ranking).
+    """
     coll = os.getenv("QDRANT_COLLECTION_NAME_COMPANY_DOCUMENTS")
-    results, _ = client.scroll(
+    if not coll:
+        return "Collection name is missing (QDRANT_COLLECTION_NAME_COMPANY_DOCUMENTS)."
+
+    sym = symbol.upper().strip()
+    if not sym:
+        return "symbol is required."
+
+    q = (query or "").strip()
+    if q:
+        vec = _embed_model().encode(q).tolist()
+        resp = client.query_points(
+            collection_name=coll,
+            query=vec,
+            query_filter=_symbol_filter(sym),
+            limit=_top_k(),
+            with_payload=True,
+            with_vectors=False,
+        )
+        out: list[dict] = []
+        for h in resp.points:
+            row = dict(h.payload or {})
+            row["_match_score"] = float(h.score)
+            out.append(row)
+        return out
+
+    rows, _ = client.scroll(
         collection_name=coll,
+        scroll_filter=_symbol_filter(sym),
         limit=100,
         with_payload=True,
         with_vectors=False,
     )
-    sym = symbol.upper()
-    return [p.payload for p in results if p.payload.get("symbol") == sym]
-
-
-@tool
-def extract_pdf_text_tool(pdf_url: str):
-    """Download a PDF and extract text (truncated for context limits)."""
-    raw, err = _fetch_pdf_bytes(pdf_url)
-    if raw is None:
-        return f"Unable to download PDF ({err})"
-
-    with tempfile.NamedTemporaryFile(suffix=".pdf") as temp_pdf:
-        temp_pdf.write(raw)
-        temp_pdf.flush()
-        doc = fitz.open(temp_pdf.name)
-        try:
-            text = "".join(page.get_text() for page in doc)
-        finally:
-            doc.close()
-        return text[:20000]
-
-
+    return [p.payload for p in rows if p.payload]
 
 
 if __name__ == "__main__":
-    rows = get_company_documents_tool.invoke({"symbol":"DMART"})
-    print(rows)
-    pdf_url = rows[0].get("pdf_url") if rows else None
-    if not pdf_url:
-        print("No PDF URL found")
-        exit(1)
-    text = extract_pdf_text_tool.invoke({"pdf_url": pdf_url})
-    body = text if isinstance(text, str) else str(text)
-    print(body[:1200] + ("…" if len(body) > 1200 else ""))
-
+    rows = get_company_documents_tool.invoke(
+        {"symbol": "DMART", "query": "annual general meeting dividend"}
+    )
+    pdf_extracted_text = rows[0].get("pdf_extracted_text")
+    print(pdf_extracted_text)

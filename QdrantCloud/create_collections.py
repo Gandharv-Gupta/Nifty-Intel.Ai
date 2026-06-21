@@ -155,6 +155,12 @@ except Exception as e:
 try:
     client.create_payload_index(
         collection_name=qdrant_collection_name_company_documents,
+        field_name="symbol",
+        field_schema=PayloadSchemaType.KEYWORD
+    )
+
+    client.create_payload_index(
+        collection_name=qdrant_collection_name_company_documents,
         field_name="company",
         field_schema=PayloadSchemaType.KEYWORD
     )
