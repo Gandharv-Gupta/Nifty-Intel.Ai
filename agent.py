@@ -8,6 +8,7 @@ from Tools.option_chain_tool import get_option_chain
 from Tools.top_gainers_losers_tool import get_top_movers
 from Tools.analytics_tool import analyze_market
 from Tools.company_data_tool import get_company_documents_tool
+from Tools.recommendation_tool import get_recommendation_engine_tool
 
 load_dotenv()
 
@@ -31,6 +32,7 @@ nifty_agent = create_agent(
         get_top_movers,
         analyze_market,
         get_company_documents_tool,
+        get_recommendation_engine_tool
     ],
     system_prompt=nifty_agent_prompt,
 )
@@ -39,7 +41,7 @@ nifty_agent = create_agent(
 if __name__ == "__main__":
     inputs = {
         "messages": [
-            {"role": "user", "content": "Analyse the data of top performers in the market"},
+            {"role": "user", "content": "what would you recommend today"},
         ]
     }
     for chunk in nifty_agent.stream(inputs, stream_mode="updates"):

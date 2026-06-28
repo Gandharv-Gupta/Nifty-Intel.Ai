@@ -41,3 +41,5 @@ tenacity
 # PDF Processing (Phase 2)
 pymupdf
 
+
+yfinance

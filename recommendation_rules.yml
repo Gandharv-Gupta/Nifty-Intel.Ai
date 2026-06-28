@@ -1,0 +1,54 @@
+pe:
+  excellent: 20
+  acceptable: 30
+  excellent_score: 15
+  acceptable_score: 8
+  poor_score: -10
+
+roe:
+  excellent: 0.20
+  acceptable: 0.15
+  excellent_score: 15
+  acceptable_score: 8
+  poor_score: -10
+
+profit_margin:
+  excellent: 0.15
+  excellent_score: 10
+  poor_score: -5
+
+revenue_growth:
+  excellent: 0.10
+  acceptable: 0.00
+  excellent_score: 10
+  acceptable_score: 5
+  poor_score: -10
+
+earnings_growth:
+  excellent: 0.10
+  acceptable: 0.00
+  excellent_score: 10
+  acceptable_score: 5
+  poor_score: -10
+
+beta:
+  safe: 1.0
+  risky: 2.0
+  safe_score: 5
+  risky_score: -10
+
+trend:
+  above_50_score: 5
+  above_200_score: 5
+  below_score: -5
+
+analyst:
+  strong_buy: 15
+  buy: 10
+  hold: 0
+  sell: -10
+
+recommendation:
+  strong_buy: 60
+  buy: 45
+  hold: 30

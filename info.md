@@ -15,3 +15,10 @@ python -u -m IngestionPipeline.populate_qdrant
 
 #Run ingestion pipeline
 
+
+
+#Indicators I am fetching:
+OVERVIEW: Company fundamentals (PE, EPS, Market Cap, Sector, Beta)
+RSI:  momentum indicator
+MAC:  trend indicator
+SMA	:Confirms trend (e.g., 50-day SMA)
