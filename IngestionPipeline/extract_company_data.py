@@ -99,11 +99,20 @@ def extract_pdf_text(pdf_url: str) -> str:
 
 def extract_company_announcements():
     """Returns raw NSE corporate announcements (list of dicts)."""
+    print("[Company][Extract] Requesting NSE company announcements")
+    print("[Company][Extract] Creating session and loading announcements")
     _ensure_announcements_loaded()
     assert response is not None
     if response.status_code != 200:
+        print(f"[Company][Extract] Failed (HTTP {response.status_code})")
         return []
-    return response.json()
+    print("[Company][Extract] Parsing response data")
+    data = response.json()
+    print(f"[Company][Extract] Retrieved {len(data)} announcements")
+    if data:
+        print("[Company][Extract] First record preview:")
+        print(json.dumps(data[0], indent=2))
+    return data
 
 
 if __name__ == "__main__":

@@ -9,19 +9,14 @@ _repo_root = Path(__file__).resolve().parents[1]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from sentence_transformers import SentenceTransformer
 from qdrant_client.models import PointStruct
 
 from shared_qdrant import client
+from .embedding_model import embed_text
 
 qdrant_collection_name_nifty_50 = os.getenv(
     "QDRANT_COLLECTION_NAME_NIFTY_50"
 )
-
-embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
-
 
 def build_market_text(stock: dict) -> str:
     return f"""
@@ -43,17 +38,31 @@ def build_market_text(stock: dict) -> str:
 
 def store_market_data(data: dict):
 
+    market_records = data.get("data", [])
+    if not market_records:
+        print("[Nifty50][Store] No records found; skipping upsert")
+        return
+
+    print(f"[Nifty50][Store] Preparing {len(market_records)} records")
+
+
+
     market_date = datetime.now(
         ZoneInfo("Asia/Kolkata")
     ).strftime("%Y-%m-%d")
 
     points = []
 
-    for stock in data["data"]:
+    for stock in market_records:
+        print("[Nifty50][Store] Building stock data")
 
         text = build_market_text(stock)
+        
+        print("[Nifty50][Store] Creating embedding")
 
-        vector = embedding_model.encode(text).tolist()
+        vector = embed_text(text)
+
+        print("[Nifty50][Store] Preparing payload for Qdrant upsert")
 
         payload = {
             "source": "market_data",
@@ -86,6 +95,7 @@ def store_market_data(data: dict):
             "raw_record": stock
         }
 
+        print("[Nifty50][Store] Creating PointStruct")
         points.append(
             PointStruct(
                 id=str(uuid.uuid4()),
@@ -94,12 +104,13 @@ def store_market_data(data: dict):
             )
         )
 
+    print("[Nifty50][Store] Upserting data")
     client.upsert(
         collection_name=qdrant_collection_name_nifty_50,
         points=points
     )
 
     print(
-        f"Stored {len(points)} records in "
+        f"[Nifty50][Store] Upserted {len(points)} records to "
         f"'{qdrant_collection_name_nifty_50}'"
     )

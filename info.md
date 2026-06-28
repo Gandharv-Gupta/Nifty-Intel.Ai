@@ -10,3 +10,8 @@ uvicorn backend_api:app --reload --host 0.0.0.0 --port 8000
 #Ingest data individually in the qdrant:
 python -u IngestionPipeline/ingest_company_data.py
 
+#Ingest all
+python -u -m IngestionPipeline.populate_qdrant
+
+#Run ingestion pipeline
+

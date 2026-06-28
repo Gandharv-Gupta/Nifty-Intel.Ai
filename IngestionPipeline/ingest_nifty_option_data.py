@@ -8,14 +8,10 @@ _repo_root = Path(__file__).resolve().parents[1]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from sentence_transformers import SentenceTransformer
 from qdrant_client.models import PointStruct
 
 from shared_qdrant import client
-
-embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
+from .embedding_model import embed_text
 
 qdrant_collection_name_nifty_option = os.getenv("QDRANT_COLLECTION_NAME_NIFTY_OPTION")
 
@@ -49,18 +45,27 @@ def build_option_text(record: dict) -> str:
 
 def store_option_chain_data(data: dict):
 
-    option_records = data["records"]["data"]
+    option_records = data.get("records", {}).get("data", [])
+    if not option_records:
+        print("[NiftyOption][Store] No records found; skipping upsert")
+        return
+
+    print(f"[NiftyOption][Store] Preparing {len(option_records)} records")
 
     points = []
 
     for record in option_records:
+        print("[NiftyOption][Store] Building option data")
 
         ce = record.get("CE", {})
         pe = record.get("PE", {})
 
         text = build_option_text(record)
+        print("[NiftyOption][Store] Creating embedding")
 
-        vector = embedding_model.encode(text).tolist()
+        vector = embed_text(text)
+
+        print("[NiftyOption][Store] Preparing payload for Qdrant upsert")
 
         payload = {
 
@@ -92,6 +97,7 @@ def store_option_chain_data(data: dict):
             "raw_record": record
         }
 
+        print("[NiftyOption][Store] Creating PointStruct")
         points.append(
             PointStruct(
                 id=str(uuid.uuid4()),
@@ -100,11 +106,12 @@ def store_option_chain_data(data: dict):
             )
         )
 
+    print("[NiftyOption][Store] Upserting data")
     client.upsert(
         collection_name=qdrant_collection_name_nifty_option,
         points=points
     )
 
     print(
-        f"Stored {len(points)} option-chain records in '{qdrant_collection_name_nifty_option}'"
+        f"[NiftyOption][Store] Upserted {len(points)} records to '{qdrant_collection_name_nifty_option}'"
     )

@@ -9,23 +9,18 @@ _repo_root = Path(__file__).resolve().parents[1]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from sentence_transformers import SentenceTransformer
 from qdrant_client.models import PointStruct
 
 from utils import load_repo_dotenv
 from shared_qdrant import client
-from extract_company_data import extract_pdf_text
+from .embedding_model import embed_text
+from .extract_company_data import extract_pdf_text
 
 load_repo_dotenv()
 
 qdrant_collection_name_company_documents = os.getenv(
     "QDRANT_COLLECTION_NAME_COMPANY_DOCUMENTS"
 )
-
-embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
-
 
 def build_company_text(announcement: dict, pdf_extract: str = "") -> str:
     base = f"""
@@ -49,6 +44,12 @@ def build_company_text(announcement: dict, pdf_extract: str = "") -> str:
 
 def store_company_data(announcements: list):
 
+    if not announcements:
+        print("[Company][Store] No records found; skipping upsert")
+        return
+
+    print(f"[Company][Store] Preparing {len(announcements)} announcements")
+
     announcement_date = datetime.now(
         ZoneInfo("Asia/Kolkata")
     ).strftime("%Y-%m-%d")
@@ -56,6 +57,7 @@ def store_company_data(announcements: list):
     points = []
 
     for announcement in announcements:
+        print("[Company][Store] Building company data")
 
         pdf_url = announcement.get("attchmntFile")
         pdf_extract = ""
@@ -68,8 +70,11 @@ def store_company_data(announcements: list):
                 pdf_extract = raw or ""
 
         text = build_company_text(announcement, pdf_extract)
+        print("[Company][Store] Creating embedding")
 
-        vector = embedding_model.encode(text).tolist()
+        vector = embed_text(text)
+
+        print("[Company][Store] Preparing payload for Qdrant upsert")
 
         payload = {
             "source": "company_announcements",
@@ -117,6 +122,7 @@ def store_company_data(announcements: list):
             "raw_record": announcement,
         }
 
+        print("[Company][Store] Creating PointStruct")
         points.append(
             PointStruct(
                 id=str(uuid.uuid4()),
@@ -125,19 +131,20 @@ def store_company_data(announcements: list):
             )
         )
 
+    print("[Company][Store] Upserting data")
     client.upsert(
         collection_name=qdrant_collection_name_company_documents,
         points=points
     )
 
     print(
-        f"Stored {len(points)} records in "
+        f"[Company][Store] Upserted {len(points)} records to "
         f"'{qdrant_collection_name_company_documents}'"
     )
 
 
 if __name__ == "__main__":
-    import extract_company_data as ec
+    from . import extract_company_data as ec
 
     announcements = ec.extract_company_announcements()
     if not isinstance(announcements, list) or not announcements:

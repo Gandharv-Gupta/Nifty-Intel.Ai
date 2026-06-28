@@ -8,13 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-nifty_option_base_url = os.getenv("NIFTY_OPTION_BASE_URL")
-nifty_option_api_url = os.getenv("NIFTY_OPTION_API_URL")
-option_expiry_date = os.getenv("OPTION_EXPIRY_DATE")
-
-print(nifty_option_base_url)
-print(nifty_option_api_url)
-
 headers = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -25,29 +18,33 @@ headers = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-params = {
-    "expiry": option_expiry_date,
-}
-
-session = requests.Session()
-
-# Visit NSE homepage first to obtain cookies
-session.get(nifty_option_base_url, headers=headers, timeout=10)
-
-# Fetch Nifty 50 data
-response = session.get(nifty_option_api_url, headers=headers, params=params, timeout=10)
-
-print("Status Code:", response.status_code)
-if response.status_code == 200:
-    data = response.json()
-    print(data.keys())
-
-    # Print first company record
-    print(json.dumps(data["records"].get("data")[0], indent=2))
-    print(f"\nTotal Companies: {len(data['records'].get('data'))}")
-else:
-    print(response.text)
-
-
 def extract_nifty_option_data():
-    return response.json()
+    nifty_option_base_url = os.getenv("NIFTY_OPTION_BASE_URL")
+    nifty_option_api_url = os.getenv("NIFTY_OPTION_API_URL")
+    option_expiry_date = os.getenv("OPTION_EXPIRY_DATE")
+
+    print("[NiftyOption][Extract] Requesting NSE option-chain data")
+    print("[NiftyOption][Extract] Creating session")
+
+    params = {
+        "expiry": option_expiry_date,
+    }
+
+    session = requests.Session()
+    print("[NiftyOption][Extract] Fetching option-chain snapshot")
+    session.get(nifty_option_base_url, headers=headers, timeout=10)
+    response = session.get(nifty_option_api_url, headers=headers, params=params, timeout=10)
+
+    if response.status_code != 200:
+        print(f"[NiftyOption][Extract] Failed (HTTP {response.status_code})")
+        return {"records": {"data": []}}
+
+    print("[NiftyOption][Extract] Parsing response data")
+    data = response.json()
+    option_records = data.get("records", {}).get("data", [])
+    print(f"[NiftyOption][Extract] Retrieved {len(option_records)} records")
+    if option_records:
+        print("[NiftyOption][Extract] First record preview:")
+        print(json.dumps(option_records[0], indent=2))
+
+    return data

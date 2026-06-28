@@ -5,12 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-nifty_50_base_url = os.getenv("NIFTY_50_BASE_URL")
-nifty_50_api_url = os.getenv("NIFTY_50_API_URL")
-
-print(nifty_50_base_url)
-print(nifty_50_api_url)
-
 headers = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -21,27 +15,28 @@ headers = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-session = requests.Session()
-
-# Visit NSE homepage first to obtain cookies
-session.get(nifty_50_base_url, headers=headers, timeout=10)
-
-# Fetch Nifty 50 data
-response = session.get(nifty_50_api_url, headers=headers, timeout=10)
-
-print("Status Code:", response.status_code)
-
-
-
-if response.status_code == 200:
-    data = response.json()
-
-    # Print first company record
-    print(json.dumps(data["data"][0], indent=2))
-    print(f"\nTotal Companies: {len(data['data'])}")
-else:
-    print(response.text)
-
-
 def extract_nifty_50_data():
-    return response.json()
+    nifty_50_base_url = os.getenv("NIFTY_50_BASE_URL")
+    nifty_50_api_url = os.getenv("NIFTY_50_API_URL")
+
+    print("[Nifty50][Extract] Requesting NSE market data")
+    print("[Nifty50][Extract] Creating session")
+
+    session = requests.Session()
+    print("[Nifty50][Extract] Fetching market snapshot")
+    session.get(nifty_50_base_url, headers=headers, timeout=10)
+    response = session.get(nifty_50_api_url, headers=headers, timeout=10)
+
+    if response.status_code != 200:
+        print(f"[Nifty50][Extract] Failed (HTTP {response.status_code})")
+        return {"data": []}
+
+    print("[Nifty50][Extract] Parsing response data")
+    data = response.json()
+    market_records = data.get("data", [])
+    print(f"[Nifty50][Extract] Retrieved {len(market_records)} records")
+    if market_records:
+        print("[Nifty50][Extract] First record preview:")
+        print(json.dumps(market_records[0], indent=2))
+
+    return data
