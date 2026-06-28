@@ -1,135 +1,121 @@
 # NiftyIntel AI 📈🤖
 
-An Agentic RAG system for the Indian stock market that collects NIFTY 50 market data, option chain data, and corporate announcements, stores them in a vector database, and enables natural-language querying through an AI-powered chatbot.
+An Agentic AI-powered market intelligence platform for the Indian stock market that combines Retrieval-Augmented Generation (RAG), automated data ingestion, semantic search, and configurable stock recommendations using LLMs and financial fundamentals.
 
 ---
 
-## Overview
+# Overview
 
 NiftyIntel AI is an end-to-end market intelligence platform built around Agentic AI and Retrieval-Augmented Generation (RAG).
 
-The system automatically ingests daily market data from NSE, processes both structured and unstructured financial information (including PDF announcements), generates vector embeddings, and stores everything in Qdrant for semantic retrieval.
+The platform automatically ingests daily market data from NSE, processes both structured and unstructured financial information (including PDF announcements), generates vector embeddings, and stores everything in Qdrant for semantic retrieval.
+
+It also includes a configurable stock recommendation engine that combines company fundamentals from Yahoo Finance with rule-based scoring and LLM reasoning.
 
 Users can interact with the system using natural language to:
 
-* Analyze NIFTY 50 market movements
-* Explore option chain activity
-* Identify top gainers and losers
-* Query company announcements
-* Extract insights from PDFs
-* Generate AI-driven market analysis
+- Analyze NIFTY 50 market movements
+- Explore option chain activity
+- Identify top gainers and losers
+- Query company announcements
+- Extract insights from corporate PDFs
+- Generate AI-powered market analysis
+- Receive configurable stock recommendations
 
 ---
 
-## Architecture
+# Architecture
 
-```text
-NSE APIs
-    │
-    ▼
-Data Ingestion Pipeline
-    │
-    ├── Market Data
-    ├── Option Chain Data
-    └── Corporate Announcements + PDFs
-    │
-    ▼
-Processing Layer
-    │
-    ├── Cleaning
-    ├── PDF Extraction
-    ├── Chunking
-    └── Embedding Generation
-    │
-    ▼
-Qdrant Vector Database
-    │
-    ▼
-LangGraph Agent
-    │
-    ├── Market Data Tool
-    ├── Option Chain Tool
-    ├── Top Gainers/Losers Tool
-    ├── Company Documents Tool
-    └── Analytics Tool
-    │
-    ▼
-LLM Reasoning
-    │
-    ▼
-Natural Language Responses
+```mermaid
+(Paste your Mermaid architecture here)
 ```
 
 ---
 
-## Features
+# Features
 
-### Daily NIFTY 50 Market Data Collection
+## Daily Automated Data Ingestion
 
-Collects live market information including:
+The platform automatically refreshes its knowledge base using APScheduler.
 
-* Symbol
-* Last Price
-* Open
-* High
-* Low
-* Volume
-* Traded Value
-* Percentage Change
-* 52 Week High/Low
+Every scheduled run:
+
+- Fetches NIFTY 50 market data
+- Fetches NIFTY option chain
+- Retrieves corporate announcements
+- Downloads attached PDFs
+- Extracts document text
+- Chunks documents
+- Generates embeddings
+- Updates Qdrant collections
+
+This ensures that the chatbot always operates on the latest market snapshot.
+
+---
+
+## NIFTY 50 Market Intelligence
+
+Collects market information including:
+
+- Symbol
+- Last Price
+- Open
+- High
+- Low
+- Previous Close
+- Volume
+- Traded Value
+- Percentage Change
+- 52 Week High / Low
 
 Example:
 
 ```text
-INFY
-Last Price: 1054.20
-Change: -6.50%
-Volume: 45,665,442
+Show me today's market data for INFY.
 ```
 
 ---
 
-### Option Chain Intelligence
+## Option Chain Intelligence
 
-Tracks option chain data such as:
+Tracks option chain metrics such as:
 
-* Strike Price
-* Open Interest (OI)
-* Change in OI
-* Call Option Metrics
-* Put Option Metrics
-* Implied Volatility
-* Trading Volume
+- Strike Price
+- Open Interest
+- Change in OI
+- Call OI
+- Put OI
+- Volume
+- Implied Volatility
 
-Example Questions:
+Example:
 
 ```text
-What is the highest OI strike for NIFTY?
-
-Which strikes have significant Put writing?
+Which strike has the highest Call Open Interest?
 ```
 
 ---
 
-### Corporate Announcements Processing
+## Corporate Announcement Intelligence
 
-Automatically ingests:
+Automatically processes:
 
-* NSE corporate announcements
-* Attached PDFs
-* ZIP documents
-* Investor presentations
-* Board meeting updates
-* AGM notices
-* Earnings reports
+- NSE Corporate Announcements
+- Investor Presentations
+- Board Meeting Updates
+- AGM Notices
+- Financial Reports
+- PDF Attachments
+- ZIP Attachments
 
-The system:
+Pipeline:
 
-1. Downloads documents
-2. Extracts text
-3. Generates embeddings
-4. Stores them in Qdrant
-5. Makes them searchable through RAG
+1. Download document
+2. Extract PDF text
+3. Chunk content
+4. Generate embeddings
+5. Store in Qdrant
+6. Retrieve using semantic search
 
 Example:
 
@@ -139,70 +125,120 @@ Summarize the latest announcement from INFY.
 
 ---
 
-### Agentic AI
+## AI-Powered Stock Recommendation Engine
 
-Built using LangGraph.
+The platform includes a configurable recommendation engine.
 
-The central NiftyAgent dynamically decides which tools to invoke based on the user's question.
+Workflow:
 
-#### Available Tools
+1. Fetch latest company fundamentals from Yahoo Finance
+2. Apply configurable financial rules stored in YAML
+3. Generate a recommendation score
+4. Pass both the score and raw financial data to the LLM
+5. Generate an explainable recommendation
 
-| Tool                    | Purpose                     |
-| ----------------------- | --------------------------- |
-| Market Data Tool        | Retrieve market data        |
-| Option Chain Tool       | Query option chain records  |
-| Top Gainers/Losers Tool | Market performance analysis |
-| Company Documents Tool  | PDF retrieval and analysis  |
-| Analytics Tool          | AI-powered reasoning        |
+Unlike pure LLM reasoning, recommendations remain transparent, deterministic, and easily tunable.
 
----
-
-## Tech Stack
-
-### AI & LLM
-
-* LangGraph
-* LangChain
-* OpenAI GPT-4o
-* Google Gemini
-* Sentence Transformers
-
-### Vector Database
-
-* Qdrant
-
-### Backend
-
-* Python
-* FastAPI
-
-### Data Sources
-
-* NSE Market APIs
-* NSE Option Chain APIs
-* NSE Corporate Announcement APIs
-
-### Document Processing
-
-* PyMuPDF
-* PDF Extraction
-* Text Chunking
-
-### Embeddings
+Example:
 
 ```text
-sentence-transformers/all-MiniLM-L6-v2
+Should I buy Infosys today?
 ```
 
 ---
 
-## Qdrant Collections
+# Agentic AI
 
-### 1. nifty50_market_data
+Built using LangGraph.
 
-Stores structured market data.
+The central **NiftyAgent** dynamically decides which tools to invoke depending on the user's request.
 
-Example Metadata:
+## Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| Market Data Tool | Retrieve latest NIFTY 50 market data |
+| Option Chain Tool | Query option chain data |
+| Top Gainers / Losers Tool | Market performance analysis |
+| Company Documents Tool | Retrieve and summarize corporate announcements |
+| Analytics Tool | AI-powered market reasoning |
+| Recommendation Tool | Fetch fundamentals and generate configurable stock recommendations |
+
+---
+
+# Tech Stack
+
+## AI
+
+- LangGraph
+- LangChain
+- OpenAI GPT-4o
+- Google Gemini
+
+## Vector Database
+
+- Qdrant
+
+## Backend
+
+- Python
+- FastAPI
+
+## Scheduling
+
+- APScheduler
+
+## Financial Data Sources
+
+- NSE Market APIs
+- NSE Option Chain APIs
+- NSE Corporate Announcement APIs
+- Yahoo Finance
+
+## Embeddings
+
+- sentence-transformers/all-MiniLM-L6-v2
+
+## Document Processing
+
+- PyMuPDF
+- PDF Text Extraction
+- Text Chunking
+
+---
+
+# Recommendation Rules
+
+Recommendation logic is completely configurable using YAML.
+
+Example:
+
+```yaml
+pe:
+  excellent: 15
+  acceptable: 25
+
+roe:
+  excellent: 0.20
+  acceptable: 0.15
+
+recommendation:
+  strong_buy: 15
+  buy: 10
+  hold: 5
+```
+
+Changing the YAML changes the recommendation behaviour without modifying Python code.
+
+---
+
+# Qdrant Collections
+
+## Market Data
+
+Stores structured NIFTY 50 market snapshots.
+
+Example metadata:
 
 ```json
 {
@@ -215,11 +251,11 @@ Example Metadata:
 
 ---
 
-### 2. nifty50_option_chain
+## Option Chain
 
 Stores option chain records.
 
-Example Metadata:
+Example:
 
 ```json
 {
@@ -232,144 +268,158 @@ Example Metadata:
 
 ---
 
-### 3. nifty50_company_documents
+## Company Documents
 
-Stores processed corporate announcements and PDF content.
+Stores embedded corporate announcements and PDF content.
 
-Example Metadata:
+Example:
 
 ```json
 {
   "symbol": "INFY",
   "announcement_type": "Investor Presentation",
-  "pdf_url": "...",
   "announcement_date": "2026-06-21"
 }
 ```
 
 ---
 
-## Project Structure
+# Project Structure
 
 ```text
 NiftyIntelAI/
-│
-├── agents/
-│   └── nifty_agent.py
-│
-├── tools/
+
+├── agent.py
+
+├── Tools/
 │   ├── market_data_tool.py
 │   ├── option_chain_tool.py
-│   ├── top_gainers_tool.py
+│   ├── top_movers_tool.py
 │   ├── company_documents_tool.py
-│   └── analytics_tool.py
-│
+│   ├── analytics_tool.py
+│   └── recommendation_tool.py
+
+├── recommendation/
+│   ├── recommendation_engine.py
+│   └── recommendation_rules.yml
+
 ├── ingestion/
 │   ├── market_data/
 │   ├── option_chain/
 │   └── corporate_announcements/
-│
-├── embeddings/
-│
-├── vector_store/
-│   └── qdrant/
-│
-├── api/
-│
+
+├── scheduler/
+│   └── scheduler.py
+
+├── qdrant/
+
 ├── shared/
-│
-├── tests/
-│
+
 ├── requirements.txt
-│
+
 └── README.md
 ```
 
 ---
 
-## Example Queries
+# Example Queries
 
-### Market Data
+## Market Data
 
 ```text
 Which NIFTY 50 stocks gained the most today?
 ```
 
 ```text
-Show me the latest data for INFY.
+Show me today's market data for INFY.
 ```
 
 ---
 
-### Option Chain
+## Option Chain
 
 ```text
-What is the highest open interest strike?
+Which strike has the highest Open Interest?
 ```
 
 ```text
-Which strikes indicate strong support?
+Where is the strongest support according to today's option chain?
 ```
 
 ---
 
-### Corporate Documents
+## Company Announcements
 
 ```text
 Summarize the latest announcement from AXISBANK.
 ```
 
 ```text
-What did INFY announce recently?
+What did Infosys announce recently?
 ```
 
 ---
 
-### Analytics
+## Market Analysis
 
 ```text
 Analyze today's market sentiment.
 ```
 
 ```text
-Compare NIFTY market data with option chain activity.
+Compare today's option chain with market movement.
 ```
 
 ---
 
-## Future Enhancements
+## Stock Recommendations
 
-* Historical trend analysis
-* Multi-day option chain tracking
-* Company-level financial intelligence
-* Advanced forecasting
-* Portfolio insights
-* Real-time streaming updates
-* Multi-agent architecture
-* Hybrid search (Vector + Metadata)
+```text
+Should I buy Infosys today?
+```
 
----
+```text
+Recommend a NIFTY 50 stock.
+```
 
-## Why This Project?
+```text
+Why do you recommend HDFC Bank?
+```
 
-Financial data is fragmented across multiple sources and formats.
-
-NiftyIntel AI combines:
-
-* Structured market data
-* Option chain analytics
-* Unstructured PDF documents
-* Vector search
-* Agentic AI
-
-into a single intelligent system capable of answering complex financial questions through natural language.
+```text
+Compare Infosys and TCS from an investment perspective.
+```
 
 ---
 
-## Author
+# Future Enhancements
+
+- Portfolio-aware recommendations
+- Technical indicators (RSI, MACD)
+- Historical backtesting
+- Multi-agent financial analyst system
+- Real-time streaming updates
+- Hybrid Vector + SQL retrieval
+- Sector-wise recommendation engine
+
+---
+
+# Why This Project?
+
+Financial information is fragmented across structured APIs, option chain data, company announcements, and lengthy PDF documents.
+
+NiftyIntel AI unifies all of these into a single Agentic AI platform capable of:
+
+- Semantic search over financial documents
+- Market intelligence using RAG
+- Automated daily data ingestion
+- LLM-powered market analysis
+- Explainable stock recommendations using configurable financial rules
+
+---
+
+# Author
 
 **Gandharv Gupta**
 
-AI Engineer | Generative AI | Agentic Systems | RAG Applications
-
-
+AI Engineer | Generative AI | Agentic AI | Retrieval-Augmented Generation (RAG)
