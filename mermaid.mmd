@@ -24,23 +24,37 @@ flowchart LR
 
         T5["📉 Analytics Tool"]
 
+        T6["💡 Recommendation Tool"]
+
         LLM["🤖 OpenAI / Gemini"]
 
         RAG["🔎 RAG Retrieval Layer"]
+
+        YF["📊 Yahoo Finance"]
+
+        RULES["⚙️ YAML Rule Engine"]
 
         AG --- T1
         AG --- T2
         AG --- T3
         AG --- T4
         AG --- T5
+        AG --- T6
 
         T1 --> RAG
         T2 --> RAG
         T3 --> RAG
         T4 --> RAG
 
-        T4 -.Uses .-> LLM
-        T5 -.Uses .-> LLM
+        T4 -. Uses .-> LLM
+        T5 -. Uses .-> LLM
+
+        T6 --> YF
+        T6 --> RULES
+
+        YF --> RULES
+
+        RULES -. Recommendation Score .-> LLM
 
     end
 
@@ -70,6 +84,8 @@ flowchart LR
 
     subgraph PIPELINE["📥 Daily Ingestion Pipeline"]
 
+        APS["⏰ APScheduler"]
+
         NSE1["📈 NSE Nifty 50 API"]
 
         NSE2["📊 NSE Option Chain API"]
@@ -86,6 +102,10 @@ flowchart LR
 
         EMB["🧬 Embedding Model
 all-MiniLM-L6-v2"]
+
+        APS --> NSE1
+        APS --> NSE2
+        APS --> NSE3
 
     end
 
@@ -132,12 +152,12 @@ all-MiniLM-L6-v2"]
     class USER user;
     class RESPONSE response;
 
-    class AG,T1,T2,T3,T4,T5,RAG agent;
+    class AG,T1,T2,T3,T4,T5,T6,RAG agent;
 
     class LLM llm;
 
     class MD,OC,CD db;
 
-    class NSE1,NSE2,NSE3 source;
+    class NSE1,NSE2,NSE3,YF source;
 
-    class PROCESS,PDF,EMB process;
+    class PROCESS,PDF,EMB,APS,RULES process;
